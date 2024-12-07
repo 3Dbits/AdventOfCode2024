@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-string filePath = "input.txt";
+﻿string filePath = "input.txt";
 
 string[] lines = await File.ReadAllLinesAsync(filePath);
 
@@ -26,7 +24,8 @@ foreach (string line in lines)
         if (isValid)
         {
             validSum += firstNumber;
-        } else if (IsValidCalculation2(firstNumber, currentNumberList))
+        }
+        else if (IsValidCalculation2(firstNumber, currentNumberList))
         {
             validSum2 += firstNumber;
         }
