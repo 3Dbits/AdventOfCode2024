@@ -1,10 +1,14 @@
-﻿string filePath = "input.txt";
+﻿using System.Diagnostics;
+
+string filePath = "input.txt";
 
 string[] lines = await File.ReadAllLinesAsync(filePath);
 
 long validSum = default;
 long validSum2 = default;
 
+Stopwatch sw = new();
+sw.Start();
 foreach (string line in lines)
 {
     string[] parts = line.Split(':');
@@ -31,9 +35,10 @@ foreach (string line in lines)
         }
     }
 }
-
+sw.Stop();
 Console.WriteLine(validSum);
 Console.WriteLine(validSum2 + validSum);
+Console.WriteLine(sw.Elapsed);
 
 bool IsValidCalculation(long result, List<long> numbers)
 {
