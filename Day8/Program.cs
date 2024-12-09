@@ -12,6 +12,7 @@ charLocations.Remove('.');
 SortedSet<Point> partOneResult = [];
 SortedSet<Point> partTwoResult = [];
 
+// Part 1
 foreach (var (key, value) in charLocations)
 {
     var uniqueCombinations = GetUniqueCombinations(value);
@@ -28,7 +29,7 @@ foreach (var (key, value) in charLocations)
         }
     }
 }
-
+// Part 2
 foreach (var (key, value) in charLocations)
 {
     var uniqueCombinations = GetUniqueCombinations(value);
