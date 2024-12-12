@@ -1,4 +1,6 @@
-﻿string filePath = "input.txt";
+﻿using System.Diagnostics;
+
+string filePath = "input.txt";
 int[][] grid = (await File.ReadAllLinesAsync(filePath))
     .Select(line => line.Select(c => int.Parse(c.ToString())).ToArray())
     .ToArray();
@@ -27,23 +29,31 @@ for (int i = 0; i < grid.Length; i++)
 }
 
 // Part 1
+Stopwatch stopwatch = new();
+stopwatch.Start();
+var dummyPoint = new Point(-2, -2);
 foreach (var coordinate in startingCoordinates)
 {
-    IsValidPath(coordinate, new Point(-2, -2), false);
+    IsValidPath(coordinate, dummyPoint, false);
     resultCount += uniqEndPoints.Count;
     uniqEndPoints.Clear();
 }
-
+stopwatch.Stop();
 Console.WriteLine(resultCount);
+Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
 // Part 2
+stopwatch.Restart();
 resultCount = default;
+
 foreach (var coordinate in startingCoordinates)
 {
-    IsValidPath(coordinate, new Point(-2, -2), true);
+    IsValidPath(coordinate, dummyPoint, true);
 }
 
+stopwatch.Stop();
 Console.WriteLine(resultCount);
+Console.WriteLine(stopwatch.ElapsedMilliseconds);
 
 
 void IsValidPath(Point startingPoint, Point lastStep, bool secondPart, int position = 0)
@@ -110,8 +120,6 @@ public struct Point(int x, int y) : IEquatable<Point>
         obj is Point other && Equals(other);
 
     public override int GetHashCode() => HashCode.Combine(X, Y);
-
-    // Optional: Implement == and != operators
     public static bool operator ==(Point left, Point right) => left.Equals(right);
     public static bool operator !=(Point left, Point right) => !(left == right);
 }
