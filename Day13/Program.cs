@@ -77,6 +77,7 @@ foreach (var machine in part2Machines)
 
 Console.WriteLine(part2Result);
 
+// https://github.com/messcheg/advent-of-code/blob/main/AdventOfCode2024/Day13/Program.cs
 long Test(long x1, long y1, long x2, long y2, long x, long y)
 {
     long answer2 = 0;
