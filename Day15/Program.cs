@@ -1,7 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 
-string filePathGrid = "testGrid.txt";
-string filePathInput = "testInput.txt";
+string filePathGrid = "grid.txt";
+string filePathInput = "input.txt";
 
 char[][] grid = (await File.ReadAllLinesAsync(filePathGrid))
     .Select(line => line.ToCharArray())
@@ -101,17 +101,33 @@ foreach (var direction in directions)
 
     robotPosition2 = nextPosition;
     //
-    Console.WriteLine(direction.DirectionChar);
-    var newGridTest = CreateNewGrid(robotPosition2, gridLimitPositions2, boxPositions2, newGrid.Length, newGrid[0].Length);
-    PrintGrid(newGridTest);
-    foreach (var box in boxPairs)
-    {
-        Console.WriteLine($"{box.Key.X}:{box.Key.Y}  => {box.Value.X}:{box.Value.Y}");
-    }
+    //Console.WriteLine(direction.DirectionChar);
+    //var newGridTest = CreateNewGrid(robotPosition2, gridLimitPositions2, boxPositions2, newGrid.Length, newGrid[0].Length);
+    //PrintGrid(newGridTest);
+    //foreach (var box in boxPairs)
+    //{
+    //    Console.WriteLine($"{box.Key.X}:{box.Key.Y}  => {box.Value.X}:{box.Value.Y}");
+    //}
     //
 }
 
-var partTwoResult = boxPositions2.Where(b => b.Equals(newBoxLeft)).Select(pos => 100 * pos.X + pos.Y).Sum();
+long partTwoResult = default;
+foreach (var box in boxPairs)
+{
+    if (box.Value.Y > box.Key.Y)
+    {
+        boxPairs.Remove(box.Value);
+    }
+    else
+    {
+        boxPairs.Remove(box.Key);
+    }
+}
+
+foreach (var box in boxPairs)
+{
+    partTwoResult += 100 * box.Key.X + box.Key.Y;
+}
 
 Console.WriteLine(partTwoResult);
 
@@ -172,7 +188,7 @@ bool CanMoveBoxes(Coordinate currentPosition, Coordinate direction, Collection<C
 
     if (boxPositionss.Contains(nextPosition))
     {
-        return CanMoveBoxes(nextPosition, direction, boxPositions, gridLimitPositions);
+        return CanMoveBoxes(nextPosition, direction, boxPositionss, gridLimitPositions);
     }
 
     return true;
@@ -216,7 +232,6 @@ void MoveBoxes2(Coordinate currentPosition, Coordinate direction, Collection<Coo
 
 void MoveBoxesVertical(Coordinate currentPosition, Coordinate direction)
 {
-
     var positionRight = new Coordinate(
         currentPosition.X,
         currentPosition.Y + 1
@@ -239,7 +254,7 @@ void MoveBoxesVertical(Coordinate currentPosition, Coordinate direction)
     var nextPositionLeft = new Coordinate(
         currentPosition.X + direction.X,
         currentPosition.Y + direction.Y - 1
- );
+    );
 
     if (boxPairs.TryGetValue(currentPosition, out var valueCurrent) && valueCurrent.Equals(positionRight) && boxPairs.ContainsKey(nextPositionRight))
     {
@@ -271,40 +286,57 @@ void MoveBoxesVertical(Coordinate currentPosition, Coordinate direction)
 
 bool CanMoveBoxesVertical(Coordinate currentPosition, Coordinate direction, Collection<Coordinate> gridLimitPositions)
 {
+    var positionRight = new Coordinate(
+        currentPosition.X,
+        currentPosition.Y + 1
+    );
+
+    var positionLeft = new Coordinate(
+        currentPosition.X,
+        currentPosition.Y - 1
+     );
+
     var nextPositionOne = new Coordinate(
         currentPosition.X + direction.X,
         currentPosition.Y + direction.Y
     );
 
     var nextPositionRight = new Coordinate(
-        currentPosition.X + direction.X,
-        currentPosition.Y + direction.Y + 1
-    );
+        positionRight.X + direction.X,
+        positionRight.Y + direction.Y);
 
     var nextPositionLeft = new Coordinate(
-            currentPosition.X + direction.X,
-            currentPosition.Y + direction.Y - 1
-        );
+        currentPosition.X + direction.X,
+        currentPosition.Y + direction.Y - 1
+    );
 
-    if (gridLimitPositions.Contains(nextPositionOne) || gridLimitPositions.Contains(nextPositionRight) || gridLimitPositions.Contains(nextPositionLeft))
+    var isRight = boxPairs.TryGetValue(currentPosition, out var valueNext) && valueNext.Equals(positionRight);
+    var forGrid = isRight ? nextPositionRight : nextPositionLeft;
+    if (gridLimitPositions.Contains(nextPositionOne) || gridLimitPositions.Contains(forGrid))
     {
         return false;
     }
 
-    if (boxPairs.ContainsKey(nextPositionOne))
+    var isLeftOk = true;
+    var isRightOk = true;
+    var isStrightOk = true;
+
+    if (boxPairs.TryGetValue(currentPosition, out var valueCurrent) && valueCurrent.Equals(positionRight) && boxPairs.ContainsKey(nextPositionRight))
     {
-        return CanMoveBoxesVertical(nextPositionOne, direction, gridLimitPositions);
+        isRightOk = CanMoveBoxesVertical(nextPositionRight, direction, gridLimitPositions);
     }
-    if (boxPairs.ContainsKey(nextPositionRight))
+    if (boxPairs.ContainsKey(nextPositionLeft) && valueCurrent.Equals(positionLeft))
     {
-        return CanMoveBoxesVertical(nextPositionRight, direction, gridLimitPositions);
+        isLeftOk = CanMoveBoxesVertical(nextPositionLeft, direction, gridLimitPositions);
     }
-    if (boxPairs.ContainsKey(nextPositionLeft))
+    if (boxPairs.ContainsKey(nextPositionOne) &&
+        (boxPairs.TryGetValue(nextPositionLeft, out var valueLeft) && valueLeft.Equals(nextPositionOne) ||
+        boxPairs.TryGetValue(nextPositionRight, out var valueRight) && valueRight.Equals(nextPositionOne)))
     {
-        return CanMoveBoxesVertical(nextPositionLeft, direction, gridLimitPositions);
+        isStrightOk = CanMoveBoxesVertical(nextPositionOne, direction, gridLimitPositions);
     }
 
-    return true;
+    return isRightOk && isLeftOk && isStrightOk;
 }
 
 char[][] TransformGrid(char[][] grid)
