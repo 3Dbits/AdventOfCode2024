@@ -28,7 +28,7 @@ var directions = new List<Coordinate>
 var queue = new PriorityQueue<PathState, long>();
 var visited = new Dictionary<Coordinate, long>();
 
-queue.Enqueue(new PathState(startPosition, 0, 0, directions[0]), 0);
+queue.Enqueue(new PathState(startPosition, 0, 0, directions[0], null), 0);
 visited[startPosition] = 0;
 
 while (queue.Count > 0)
@@ -40,6 +40,7 @@ while (queue.Count > 0)
     if (currentPosition.Equals(endPosition))
     {
         Console.WriteLine(currentState.TotalCost);
+        Console.WriteLine(currentState.Position);
         break;
     }
 
@@ -63,16 +64,102 @@ while (queue.Count > 0)
             {
                 value = newCost;
                 visited[nextPosition] = value;
-                queue.Enqueue(new PathState(nextPosition, newPositions, newTurns, direction), newCost);
+                queue.Enqueue(new PathState(nextPosition, newPositions, newTurns, direction, null), newCost);
             }
         }
     }
 }
 
+queue.Clear();
+visited.Clear();
+
+long minTotalCost = long.MaxValue;
+var minCostPaths = new List<PathState>();
+
+queue.Enqueue(new PathState(startPosition, 0, 0, null, null), 0);
+visited[startPosition] = 0;
+
+while (queue.Count > 0)
+{
+    var currentState = queue.Dequeue();
+    var currentPosition = currentState.Position;
+
+    // If the current total cost exceeds the minimal total cost found, no need to proceed
+    if (currentState.TotalCost > minTotalCost)
+    {
+        continue;
+    }
+
+    // If we've reached the end position
+    if (currentPosition.Equals(endPosition))
+    {
+        if (currentState.TotalCost < minTotalCost)
+        {
+            // Found a new minimal total cost, reset the list
+            minTotalCost = currentState.TotalCost;
+            minCostPaths.Clear();
+            minCostPaths.Add(currentState);
+        }
+        else if (currentState.TotalCost == minTotalCost)
+        {
+            // Found another path with the same minimal total cost
+            minCostPaths.Add(currentState);
+        }
+        continue;
+    }
+
+    foreach (var direction in directions)
+    {
+        var nextPosition = new Coordinate(currentPosition.X + direction.X, currentPosition.Y + direction.Y);
+
+        if (IsValidMove2(nextPosition))
+        {
+            // Calculate the new number of turns and positions
+            long newTurns = currentState.Turns;
+            if (currentState.PreviousDirection != null && !direction.Equals(currentState.PreviousDirection))
+            {
+                newTurns++;
+            }
+            long newPositions = currentState.Positions + 1;
+            long newCost = newPositions + newTurns * 1000;
+
+            // If this path to the next position is better, or we haven't visited it yet
+            if (!visited.TryGetValue(nextPosition, out long existingCost) || existingCost > newCost)
+            {
+                visited[nextPosition] = newCost;
+                var nextState = new PathState(nextPosition, newPositions, newTurns, direction, currentState);
+                queue.Enqueue(nextState, newCost);
+            }
+        }
+    }
+}
+
+// Output all paths with the minimal total cost
+Console.WriteLine($"Minimal Total Cost: {minTotalCost}");
+Console.WriteLine("Paths with Minimal Total Cost:");
+foreach (var pathState in minCostPaths)
+{
+    var path = ReconstructPath(pathState);
+    Console.WriteLine(string.Join(" -> ", path.Select(coord => $"({coord.X}, {coord.Y})")));
+}
+
 //FindPaths(startPosition, [], 0, directions[1]);
 //FindShortestPath();
 
-Console.WriteLine(pathsToEnd.OrderBy(p => p.TotalScore).First().TotalScore);
+List<Coordinate> ReconstructPath(PathState endState)
+{
+    var path = new List<Coordinate>();
+    var currentState = endState;
+    while (currentState != null)
+    {
+        path.Add(currentState.Position);
+        currentState = currentState.PreviousState;
+    }
+    path.Reverse();
+    return path;
+}
+
+Console.WriteLine("Hello, World!");
 
 void FindPaths(Coordinate currentPosition, List<Coordinate> currentPath, long turns = 0, Coordinate? previousDirection = null)
 {
@@ -203,11 +290,12 @@ class PathToEnd(ICollection<Coordinate> path, long numberOfTurns)
     public long TotalScore => Path.Count + NumerOfTurns * TurnScoreMultiplier;
 }
 
-public class PathState(Coordinate position, long positions, long turns, Coordinate? previousDirection)
+public class PathState(Coordinate position, long positions, long turns, Coordinate? previousDirection, PathState previousState)
 {
     public Coordinate Position { get; } = position;
     public long Positions { get; } = positions;
     public long Turns { get; } = turns;
     public Coordinate? PreviousDirection { get; } = previousDirection;
+    public PathState? PreviousState { get; } = previousState;
     public long TotalCost => Positions + Turns * 1000;
 }
